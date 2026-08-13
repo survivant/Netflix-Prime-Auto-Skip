@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n"
 const { t } = useI18n()
 
 const hiddenTitlesStore = useHiddenTitlesStore()
-const { hiddenTitles } = storeToRefs(hiddenTitlesStore)
+const { hiddenTitles, hiddenTitlesTombstones } = storeToRefs(hiddenTitlesStore)
 
 type PlatformFilter = "all" | "Netflix" | "Amazon" | "Disney" | "Unknown"
 type TypeFilter = "all" | "movie" | "tv"
@@ -68,7 +68,7 @@ function toggleSelectAll() {
 }
 
 function show(title: string) {
-	delete hiddenTitles.value[title]
+	unhideTitle(hiddenTitles, hiddenTitlesTombstones, title)
 	delete selected.value[title]
 }
 function unblockSelected() {
@@ -78,7 +78,7 @@ function unblockSelected() {
 }
 function showAll() {
 	if (!confirm(t("unhideAllConfirm"))) return
-	hiddenTitles.value = {}
+	Object.keys(hiddenTitles.value).forEach((title) => unhideTitle(hiddenTitles, hiddenTitlesTombstones, title))
 	selected.value = {}
 }
 
@@ -129,6 +129,7 @@ function importTitles(event: Event) {
 					posterPath: entry.posterPath ?? null,
 					dateAdded: entry.dateAdded,
 				}
+				if (hiddenTitlesTombstones.value[title]) delete hiddenTitlesTombstones.value[title]
 			}
 			hiddenTitles.value = merged
 			alert(t("importHiddenTitlesResult", [added, skipped]))
